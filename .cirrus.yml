@@ -1,0 +1,26 @@
+task:
+  freebsd_instance:
+    matrix:
+      - image_family: freebsd-13-2-snap
+  env:
+    # /usr/ports/Mk/Uses/localbase.mk localbase:ldflags
+    LOCALBASE: /usr/local
+    CFLAGS: -isystem $LOCALBASE/include
+    CPPFLAGS: $CFLAGS
+    CXXFLAGS: $CFLAGS
+    LDFLAGS: -L$LOCALBASE/lib
+  deps_script:
+    - sed -i.bak -e 's/quarterly/latest/' /etc/pkg/FreeBSD.conf
+    - env ASSUME_ALWAYS_YES=yes pkg update -f
+    - env ASSUME_ALWAYS_YES=yes pkg install -y docbook-xsl gperf itstool lmdb gettext-tools gobject-introspection
+    - env ASSUME_ALWAYS_YES=yes pkg install -y vala meson ninja glib pkgconf python3 curl snowballstemmer libxmlb
+    - env ASSUME_ALWAYS_YES=yes pkg install -y libyaml gettext-runtime libxml2 libxslt cairo gdk-pixbuf2 librsvg2-rust
+    - env ASSUME_ALWAYS_YES=yes pkg install -y qt5-buildtools qt5-qmake qt5-testlib qt5-core pango gcab gtk-doc
+    - env ASSUME_ALWAYS_YES=yes pkg install -y docbook-xml docbook-xsl json-glib e2fsprogs-libuuid fontconfig
+    - env ASSUME_ALWAYS_YES=yes pkg install -y freetype2 at-spi2-core gdk-pixbuf2 gtk3 libarchive sqlite3
+  build_script:
+    - sed -i '' -e "s/'-i'/'-i \"\" -e'/" src/meson.build
+    - meson --auto-features=enabled -Db_colorout=never --buildtype debug  --strip -Dstemming=true  -Dvapi=true  -Ddocs=false  -Dsystemd=false -Dqt=true -Dcompose=true _build
+    - cd _build
+    - ninja -v all
+
